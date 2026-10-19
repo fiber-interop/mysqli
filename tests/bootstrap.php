@@ -11,13 +11,13 @@ if (!class_exists('Scope')) {
 
 $runtime = getenv('FI_RUNTIME') ?: 'revolt';
 $class = 'FiberInterop\\' . ucfirst($runtime) . '\\Adapter';
-async\setup(new $class());
+fiber\setup(new $class());
 
 $driver = getenv('FI_DRIVER') ?: 'generic';
 if ($driver === 'generic') {
-    async\mysqli\setup(new async\mysqli\PollDriver());
-} elseif (async\mysqli\Registry::$candidates === []) {
-    fwrite(STDERR, "No native async\\mysqli driver registered for $runtime\n");
+    fiber\mysqli\setup(new fiber\mysqli\PollDriver());
+} elseif (fiber\mysqli\Registry::$candidates === []) {
+    fwrite(STDERR, "No native fiber\\mysqli driver registered for $runtime\n");
     exit(1);
 }
-fwrite(STDERR, "runtime=$runtime driver=" . get_class(async\mysqli\driver()) . "\n");
+fwrite(STDERR, "runtime=$runtime driver=" . get_class(fiber\mysqli\driver()) . "\n");

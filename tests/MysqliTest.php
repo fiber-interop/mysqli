@@ -1,9 +1,9 @@
 <?php
 
-namespace async\mysqli\Tests;
+namespace fiber\mysqli\Tests;
 
 use PHPUnit\Framework\TestCase;
-use function async\{run, go, await, await_all};
+use function fiber\{run, go, await, await_all};
 
 final class MysqliTest extends TestCase
 {
@@ -21,14 +21,14 @@ final class MysqliTest extends TestCase
     public function testOutsideRunBehavesLikeQuery(): void
     {
         $m = self::db();
-        $this->assertSame('1', self::one(\async\mysqli\query($m, 'SELECT 1')));
-        $q = \async\mysqli\start($m, 'SELECT 2');
+        $this->assertSame('1', self::one(\fiber\mysqli\query($m, 'SELECT 1')));
+        $q = \fiber\mysqli\start($m, 'SELECT 2');
         $this->assertSame('2', self::one(run(fn() => await($q))));
     }
 
     public function testQueryInsideRun(): void
     {
-        $this->assertSame('hello', run(fn() => self::one(\async\mysqli\query(self::db(), "SELECT 'hello'"))));
+        $this->assertSame('hello', run(fn() => self::one(\fiber\mysqli\query(self::db(), "SELECT 'hello'"))));
     }
 
     public function testOverlap(): void
@@ -37,7 +37,7 @@ final class MysqliTest extends TestCase
         $r = run(function () {
             $dbs = array_map(fn() => self::db(), range(1, 10));
             $t0 = microtime(true);
-            $r = await_all(array_map(fn($m) => go(fn() => self::one(\async\mysqli\query($m, 'SELECT SLEEP(0.2)'))), $dbs));
+            $r = await_all(array_map(fn($m) => go(fn() => self::one(\fiber\mysqli\query($m, 'SELECT SLEEP(0.2)'))), $dbs));
             return [$r, microtime(true) - $t0];
         });
         [$r, $elapsed] = $r;
@@ -52,11 +52,11 @@ final class MysqliTest extends TestCase
             $ticks = 0;
             $t = go(function () use (&$ticks) {
                 for ($i = 0; $i < 5; $i++) {
-                    \async\sleep(0.02);
+                    \fiber\sleep(0.02);
                     $ticks++;
                 }
             });
-            \async\mysqli\query($m, 'SELECT SLEEP(0.2)');
+            \fiber\mysqli\query($m, 'SELECT SLEEP(0.2)');
             await($t);
             return $ticks;
         });
@@ -67,8 +67,8 @@ final class MysqliTest extends TestCase
     {
         [$a, $b, $elapsed] = run(function () {
             $m = self::db();
-            $q = \async\mysqli\start($m, 'SELECT SLEEP(0.2), 42');
-            \async\sleep(0.2);                      // the query runs meanwhile
+            $q = \fiber\mysqli\start($m, 'SELECT SLEEP(0.2), 42');
+            \fiber\sleep(0.2);                      // the query runs meanwhile
             $t0 = microtime(true);
             $r = await($q);
             $a = $r->fetch_row()[1];
@@ -86,12 +86,12 @@ final class MysqliTest extends TestCase
             $m = self::db();
             mysqli_report(MYSQLI_REPORT_OFF);
             try {
-                $r = \async\mysqli\query($m, 'SELEKT 1');
+                $r = \fiber\mysqli\query($m, 'SELEKT 1');
                 $errno = $m->errno;
             } finally {
                 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             }
-            return [$r, $errno, self::one(\async\mysqli\query($m, 'SELECT 3'))];
+            return [$r, $errno, self::one(\fiber\mysqli\query($m, 'SELECT 3'))];
         });
         $this->assertFalse($r);
         $this->assertSame(1064, $errno);
@@ -103,12 +103,12 @@ final class MysqliTest extends TestCase
         [$code, $after] = run(function () {
             $m = self::db();
             try {
-                \async\mysqli\query($m, 'SELEKT 1');
+                \fiber\mysqli\query($m, 'SELEKT 1');
                 $code = null;
             } catch (\mysqli_sql_exception $e) {
                 $code = $e->getCode();
             }
-            return [$code, self::one(\async\mysqli\query($m, 'SELECT 4'))];
+            return [$code, self::one(\fiber\mysqli\query($m, 'SELECT 4'))];
         });
         $this->assertSame(1064, $code);
         $this->assertSame('4', $after);
@@ -118,10 +118,10 @@ final class MysqliTest extends TestCase
     {
         $r = run(function () {
             $m = self::db();
-            $a = \async\mysqli\start($m, 'SELECT SLEEP(0.1), 1');
-            $b = \async\mysqli\start($m, 'SELECT 2');
-            $c = \async\mysqli\start($m, 'SELEKT');
-            $d = \async\mysqli\start($m, 'SELECT 4');
+            $a = \fiber\mysqli\start($m, 'SELECT SLEEP(0.1), 1');
+            $b = \fiber\mysqli\start($m, 'SELECT 2');
+            $c = \fiber\mysqli\start($m, 'SELEKT');
+            $d = \fiber\mysqli\start($m, 'SELECT 4');
             try {
                 await($c);
             } catch (\mysqli_sql_exception) {
@@ -135,14 +135,14 @@ final class MysqliTest extends TestCase
     {
         [$timedOut, $late, $next] = run(function () {
             $m = self::db();
-            $q = \async\mysqli\start($m, 'SELECT SLEEP(0.2), 5');
+            $q = \fiber\mysqli\start($m, 'SELECT SLEEP(0.2), 5');
             try {
                 await($q, 0.05);
                 $timedOut = false;
-            } catch (\async\TimeoutException) {
+            } catch (\fiber\TimeoutException) {
                 $timedOut = true;
             }
-            $next = self::one(\async\mysqli\query($m, 'SELECT 6'));   // queued behind the first
+            $next = self::one(\fiber\mysqli\query($m, 'SELECT 6'));   // queued behind the first
             return [$timedOut, await($q)->fetch_row()[1], $next];
         });
         $this->assertTrue($timedOut);

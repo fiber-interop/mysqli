@@ -1,12 +1,12 @@
 {
     "name": "fiber-interop/mysqli",
-    "description": "Cooperative mysqli queries for fiber-interop/api: async\\mysqli\\query() and start() on any adapter, with native drivers where the runtime has one.",
+    "description": "Cooperative mysqli queries for fiber-interop/api: fiber\\mysqli\\query() and start() on any adapter, with native drivers where the runtime has one.",
     "type": "library",
     "license": "MIT",
     "require": {
         "php": "^8.1",
         "ext-mysqli": "*",
-        "fiber-interop/api": "^0.2"
+        "fiber-interop/api": "^0.3"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5 || ^11",
@@ -18,7 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "async\\mysqli\\": "src/"
+            "fiber\\mysqli\\": "src/"
         },
         "files": [
             "src/functions.php"
@@ -26,12 +26,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "async\\mysqli\\Tests\\": "tests/"
+            "fiber\\mysqli\\Tests\\": "tests/"
         }
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "0.2.x-dev"
         }
     },
     "minimum-stability": "dev",

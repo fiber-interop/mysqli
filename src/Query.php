@@ -1,9 +1,9 @@
 <?php
 
-namespace async\mysqli;
+namespace fiber\mysqli;
 
 /**
- * The awaitable returned by PollDriver::start(): a minimal then-able, which async\await()
+ * The awaitable returned by PollDriver::start(): a minimal then-able, which fiber\await()
  * accepts on every adapter. Settles once; then() after settling calls back immediately.
  */
 final class Query

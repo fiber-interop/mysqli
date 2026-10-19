@@ -1,12 +1,12 @@
 <?php
 
-namespace async\mysqli;
+namespace fiber\mysqli;
 
 /**
  * The generic driver: sends with MYSQLI_ASYNC and reaps with reap_async_query(), polled by one
- * async\go() task per process.
+ * fiber\go() task per process.
  *
- * mysqli exposes no socket, so async\readable() cannot be used; the poller calls mysqli_poll()
+ * mysqli exposes no socket, so fiber\readable() cannot be used; the poller calls mysqli_poll()
  * with a zero timeout and sleeps between rounds, 1 ms after activity backing off to 10 ms. A
  * mysqli_socket() (or stream) accessor in php-src would let this wait on the fd instead.
  */
@@ -26,7 +26,7 @@ final class PollDriver implements Driver
         $this->queries[\spl_object_id($m)] = [$m, $q];
         if (!$this->polling) {
             $this->polling = true;
-            \async\go($this->poll(...));
+            \fiber\go($this->poll(...));
         }
         return $q;
     }
@@ -36,7 +36,7 @@ final class PollDriver implements Driver
         $interval = 0.001;
         try {
             while ($this->queries !== []) {
-                \async\sleep($interval);
+                \fiber\sleep($interval);
                 $interval = $this->collect() ? 0.001 : \min(0.010, $interval * 1.5);
             }
         } finally {
